@@ -1,31 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import { GatewayProvider } from '@civic/solana-gateway-react';
 import { Snackbar } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
-
 import * as anchor from '@project-serum/anchor';
-
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-
-import { useAnchorWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
-import { GatewayProvider } from '@civic/solana-gateway-react';
-import { MintButton } from './MintButton';
-
+import { useAnchorWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-	CandyMachine,
 	awaitTransactionSignatureConfirmation,
+	CandyMachine,
+	CANDY_MACHINE_PROGRAM,
 	getCandyMachineState,
 	mintOneToken,
-	shortenAddress,
-	CANDY_MACHINE_PROGRAM,
 } from './candy-machine';
-
+import { Container } from './Container';
+import { MintButton } from './MintButton';
 import { AlertState } from './utils';
-
-const ConnectButton = styled(WalletDialogButton)``;
-
-const MintContainer = styled.div``; // add your styles here
+import { WhiteList } from './WhiteList';
 
 export interface HomeProps {
 	candyMachineId: anchor.web3.PublicKey;
@@ -52,16 +43,13 @@ const getAvailableMints = async (walletId: string, token: string) => {
 };
 
 const Home = (props: HomeProps) => {
-	const [balance, setBalance] = useState<number>();
-	const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
-	const [isActive, setIsActive] = useState(false); // true when countdown completes
-	const [mintCount, setMintCount] = useState<number | null>(0);
+	const [isMinting, setIsMinting] = useState(false);
+	const [isActive, setIsActive] = useState(false);
+	const [mintCount, setMintCount] = useState<number>(1);
 	const [token, setToken] = useState(null);
 	const isFirstRender = useRef(true);
 
 	const [itemsAvailable, setItemsAvailable] = useState(0);
-	const [itemsRedeemed, setItemsRedeemed] = useState(0);
-	const [itemsRemaining, setItemsRemaining] = useState(0);
 
 	const [backendItemsAvailable, setBackednItemsAvailable] = useState(null);
 	const [wlHas, setWlHas] = useState(false);
@@ -128,8 +116,6 @@ const Home = (props: HomeProps) => {
 				setCandyMachine(cndy);
 
 				setItemsAvailable(cndy.state.itemsAvailable);
-				setItemsRemaining(cndy.state.itemsRemaining);
-				setItemsRedeemed(cndy.state.itemsRedeemed);
 				setIsActive(cndy.state.isActive);
 			} catch (err) {
 				console.error(err);
@@ -168,7 +154,6 @@ const Home = (props: HomeProps) => {
 			const walletId = wallet.publicKey.toBase58() || '';
 
 			for (let i = 0; i < (mintCount || 1); i++) {
-				console.log(`mint ${i + 1} token`);
 				const status = await handleMint();
 				if (!status?.err) {
 					const addResponse = await fetch(`${process.env.REACT_APP_BACKEND_HOST}/api/mint/add`, {
@@ -225,86 +210,64 @@ const Home = (props: HomeProps) => {
 				severity: 'error',
 			});
 		} finally {
-			if (wallet) {
-				const balance = await props.connection.getBalance(wallet.publicKey);
-				setBalance(balance / LAMPORTS_PER_SOL);
-			}
 			setIsMinting(false);
 			refreshCandyMachineState();
 		}
 	};
 
-	useEffect(() => {
-		(async () => {
-			if (wallet) {
-				const balance = await props.connection.getBalance(wallet.publicKey);
-				setBalance(balance / LAMPORTS_PER_SOL);
-			}
-		})();
-	}, [wallet, props.connection]);
-
 	useEffect(refreshCandyMachineState, [wallet, props.candyMachineId, props.connection, token, isFirstRender]);
 
 	const handleMintCounter = useCallback(
-		(val: string) => {
-			if (val !== '') {
-				const counter = Number(val);
-				if ((counter > 0 && counter <= availableMints) || val === '') {
-					setMintCount(counter);
-				} else if (counter > availableMints) {
-					setMintCount(availableMints);
-				} else if (counter < 1) {
-					setMintCount(0);
-				}
-			} else {
-				setMintCount(null);
+		(val: number) => {
+			const counter = Number(val);
+			if (counter > 0 && counter <= availableMints) {
+				setMintCount(counter);
+			} else if (counter > availableMints) {
+				setMintCount(availableMints);
+			} else if (counter < 1) {
+				setMintCount(0);
 			}
 		},
 		[availableMints],
 	);
 
-	if (token && !wlHas) {
-		return <p>Not in white list</p>;
-	}
-
-	if (!token && !wlHas && !wallet) {
+	const renderContent = () => {
+		if (token && !wlHas) {
+			return <WhiteList />;
+		}
+		if (!token && !wlHas && !wallet) {
+			return <WalletDialogButton className="connectButton">Connect</WalletDialogButton>;
+		}
 		return (
-			<MintContainer>
-				<ConnectButton>Connect Wallet</ConnectButton>
-			</MintContainer>
-		);
-	}
-
-	return (
-		token &&
-		wlHas && (
-			<main>
-				{wallet && <p>Wallet {shortenAddress(wallet.publicKey.toBase58() || '')}</p>}
-
-				{wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
-
-				{wallet && <p>Total Available: {availableMints}</p>}
-
-				{wallet && <p>Redeemed: {itemsRedeemed}</p>}
-
-				{wallet && <p>Remaining: {itemsRemaining}</p>}
-
-				{
-					<MintContainer>
-						{wallet && isActive && candyMachine?.state.gatekeeper && wallet.publicKey && wallet.signTransaction ? (
-							<GatewayProvider
-								wallet={{
-									publicKey: wallet.publicKey || new PublicKey(CANDY_MACHINE_PROGRAM),
-									//@ts-ignore
-									signTransaction: wallet.signTransaction,
-								}}
-								// // Replace with following when added
-								// gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-								gatekeeperNetwork={candyMachine?.state?.gatekeeper?.gatekeeperNetwork} // This is the ignite (captcha) network
-								/// Don't need this for mainnet
-								clusterUrl={rpcUrl}
-								options={{ autoShowModal: false }}
-							>
+			token &&
+			wlHas && (
+				<>
+					{
+						<>
+							{wallet && isActive && candyMachine?.state.gatekeeper && wallet.publicKey && wallet.signTransaction ? (
+								<GatewayProvider
+									wallet={{
+										publicKey: wallet.publicKey || new PublicKey(CANDY_MACHINE_PROGRAM),
+										//@ts-ignore
+										signTransaction: wallet.signTransaction,
+									}}
+									// // Replace with following when added
+									// gatekeeperNetwork={candyMachine.state.gatekeeper_network}
+									gatekeeperNetwork={candyMachine?.state?.gatekeeper?.gatekeeperNetwork} // This is the ignite (captcha) network
+									/// Don't need this for mainnet
+									clusterUrl={rpcUrl}
+									options={{ autoShowModal: false }}
+								>
+									<MintButton
+										availableMints={availableMints}
+										candyMachine={candyMachine}
+										isMinting={isMinting}
+										onMint={onMint}
+										mintCounter={mintCount}
+										handleChangeMintCounter={handleMintCounter}
+									/>
+								</GatewayProvider>
+							) : (
 								<MintButton
 									availableMints={availableMints}
 									candyMachine={candyMachine}
@@ -313,32 +276,24 @@ const Home = (props: HomeProps) => {
 									mintCounter={mintCount}
 									handleChangeMintCounter={handleMintCounter}
 								/>
-							</GatewayProvider>
-						) : (
-							<MintButton
-								availableMints={availableMints}
-								candyMachine={candyMachine}
-								isMinting={isMinting}
-								onMint={onMint}
-								mintCounter={mintCount}
-								handleChangeMintCounter={handleMintCounter}
-							/>
-						)}
-					</MintContainer>
-				}
+							)}
+						</>
+					}
+					<Snackbar
+						open={alertState.open}
+						autoHideDuration={6000}
+						onClose={() => setAlertState({ ...alertState, open: false })}
+					>
+						<Alert onClose={() => setAlertState({ ...alertState, open: false })} severity={alertState.severity}>
+							{alertState.message}
+						</Alert>
+					</Snackbar>
+				</>
+			)
+		);
+	};
 
-				<Snackbar
-					open={alertState.open}
-					autoHideDuration={6000}
-					onClose={() => setAlertState({ ...alertState, open: false })}
-				>
-					<Alert onClose={() => setAlertState({ ...alertState, open: false })} severity={alertState.severity}>
-						{alertState.message}
-					</Alert>
-				</Snackbar>
-			</main>
-		)
-	);
+	return <Container limit={5555}>{renderContent()}</Container>;
 };
 
 export default Home;

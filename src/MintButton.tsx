@@ -6,6 +6,7 @@ import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
 import { useEffect, useState } from 'react';
 import Countdown from 'react-countdown';
 import { toDate } from './utils';
+import './MintButton.css';
 
 export const CTAButton = styled(Button)``; // add your styles here
 
@@ -24,7 +25,7 @@ export const MintButton = ({
 	candyMachine: CandyMachine | undefined;
 	isMinting: boolean;
 	mintCounter: number | null;
-	handleChangeMintCounter: (val: string) => void;
+	handleChangeMintCounter: (val: number) => void;
 }) => {
 	const { requestGatewayToken, gatewayStatus } = useGateway();
 	const [clicked, setClicked] = useState(false);
@@ -46,22 +47,15 @@ export const MintButton = ({
 	const isDisabled = candyMachine?.state.isSoldOut || isMinting || !isActive || isVerifying || availableMints === 0;
 
 	return (
-		<>
-			<input
-				disabled={isDisabled}
-				type="text"
-				value={mintCounter || ''}
-				onChange={(e) => handleChangeMintCounter(e.target.value)}
-			/>
+		<div className="mintButton">
 			<CTAButton
+				className="mint"
 				disabled={isDisabled}
 				onClick={async () => {
 					if (isActive && candyMachine?.state.gatekeeper && gatewayStatus !== GatewayStatus.ACTIVE) {
-						console.log('Requesting gateway token');
 						setClicked(true);
 						await requestGatewayToken();
 					} else {
-						console.log('Minting...');
 						await onMint();
 					}
 				}}
@@ -77,7 +71,7 @@ export const MintButton = ({
 					) : isMinting ? (
 						<CircularProgress />
 					) : (
-						'MINT'
+						'MINT NOW'
 					)
 				) : candyMachine?.state.goLiveDate ? (
 					<Countdown
@@ -92,7 +86,24 @@ export const MintButton = ({
 					'UNAVAILABLE'
 				)}
 			</CTAButton>
-		</>
+			<div className="ctrls">
+				<button
+					className="ctrlButton"
+					disabled={mintCounter !== null && mintCounter <= 1}
+					onClick={() => handleChangeMintCounter((mintCounter || 1) - 1)}
+				>
+					-
+				</button>
+				<input readOnly className="mintInput" disabled={isDisabled} type="text" value={mintCounter || ''} />
+				<button
+					className="ctrlButton"
+					disabled={mintCounter !== null && mintCounter >= availableMints}
+					onClick={() => handleChangeMintCounter((mintCounter || 1) + 1)}
+				>
+					+
+				</button>
+			</div>
+		</div>
 	);
 };
 

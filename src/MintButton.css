@@ -1,0 +1,74 @@
+.mintButton{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+body .mint{
+    width: 100%;
+	max-width: 405px;
+	padding: 20px 0;
+	text-align: center;
+	color: #fff;
+	justify-content: center;
+	font-size: 35px;
+	text-transform: uppercase;
+	font-weight: bold;
+	background-color: #ef5da8;
+    border: 1px solid yellow;
+	box-sizing: border-box;
+	margin: 0 auto 15px;
+}
+
+.ctrls{
+    background-color: #000;
+    display: flex;
+    justify-content: space-between;
+    max-width: 405px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 25px;
+}
+
+.ctrlButton{
+    width: 65px;
+    height: 65px;
+    border-radius: 5px;
+    background-color: #cf0808;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 42px;
+    line-height: 65px;
+    cursor: pointer;
+    border: none;
+    color: #fff;
+    user-select: none;
+}
+
+.ctrlButton:disabled{
+    background-color: #333;
+    pointer-events: none;
+}
+
+.ctrlButton:hover {
+    background-color: #b60707;
+}
+
+body .mint:hover {
+    background-color: #f5399a;
+}
+
+.mintInput {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 38px;
+    max-width: calc(100% - 130px);
+    text-align: center;
+}
+
+.mintInput:focus{
+    outline: none;
+    border: none;
+}
