@@ -4,7 +4,7 @@ import Alert from '@material-ui/lab/Alert';
 import * as anchor from '@project-serum/anchor';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	awaitTransactionSignatureConfirmation,
