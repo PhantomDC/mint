@@ -47,6 +47,7 @@ const Home = (props: HomeProps) => {
 	const [isActive, setIsActive] = useState(false);
 	const [mintCount, setMintCount] = useState<number>(1);
 	const [token, setToken] = useState(null);
+	const [presaleTokens, setPresaleTokens] = useState(null);
 	const isFirstRender = useRef(true);
 
 	const [itemsAvailable, setItemsAvailable] = useState(0);
@@ -104,7 +105,10 @@ const Home = (props: HomeProps) => {
 							},
 						});
 
+						const wlHasResponse = await wlHas.json();
+
 						setWlHas(wlHas.ok);
+						setPresaleTokens(wlHasResponse.presaleTokens);
 
 						if (wlHas.ok) {
 							const count = await getAvailableMints(walletId, data.token);
@@ -169,6 +173,7 @@ const Home = (props: HomeProps) => {
 						const data = await addResponse.json();
 						setBackednItemsAvailable(data.count);
 						setMintCount(data.count);
+						setPresaleTokens(data.presaleTokens);
 
 						setAlertState({
 							open: true,
@@ -293,7 +298,7 @@ const Home = (props: HomeProps) => {
 		);
 	};
 
-	return <Container limit={5555}>{renderContent()}</Container>;
+	return <Container limit={presaleTokens}>{renderContent()}</Container>;
 };
 
 export default Home;
