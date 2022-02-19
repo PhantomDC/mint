@@ -72,3 +72,20 @@ body .mint:hover {
     outline: none;
     border: none;
 }
+
+
+@media screen and (max-width: 768px) {
+  .ctrlButton{
+      max-width: 45px;
+      max-height: 45px;
+  }
+
+  .ctrls{
+      padding: 15px;
+  }
+
+  body .mint{
+      padding: 10px 0;
+      font-size: 32px;
+  }
+}

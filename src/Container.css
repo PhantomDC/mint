@@ -28,8 +28,27 @@
     margin-bottom: 15px;
 }
 
+.monkey{
+    display: none;
+}
+
 @media screen and (max-width: 768px) {
     .container, .mintContainer{
         padding: 15px;
+    }
+
+    .container .monkey{
+        display: block;
+        position: absolute;
+        top: -2px;
+        left: 0;
+        right: 0;
+        margin: auto;
+        transform: translateY(-100%);
+    }
+
+    .mintContainer{
+        margin-top: 80px;
+        position: relative;
     }
 }
