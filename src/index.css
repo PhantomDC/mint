@@ -50,3 +50,7 @@ body .connectButton:hover{
 .whiteList {
   font-weight: bold;
 }
+
+.bigPic{
+  font-size: 42px;
+}

@@ -38,7 +38,6 @@ export const MintButton = ({
 			// when user approves wallet verification txn
 			setIsVerifying(true);
 		} else if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
-			console.log('Verified human, now minting...');
 			onMint();
 			setClicked(false);
 		}
