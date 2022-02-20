@@ -240,12 +240,12 @@ const Home = (props: HomeProps) => {
 	);
 
 	const renderContent = () => {
+		if (!token && !wlHas && !wallet) {
+			return <WalletDialogButton className="connectButton">Connect</WalletDialogButton>;
+		}
 		if (!isLoading) {
 			if (token && !wlHas) {
 				return <WhiteList />;
-			}
-			if (!token && !wlHas && !wallet) {
-				return <WalletDialogButton className="connectButton">Connect</WalletDialogButton>;
 			}
 
 			if (presaleTokens === 0) {
